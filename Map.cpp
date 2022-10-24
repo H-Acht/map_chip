@@ -19,25 +19,6 @@ namespace
 	//入出力ファイル名
 	const char* const kFileName = "bin/map.bin";
 
-	//マップデータ
-	constexpr int kMapData[kBgNumY][kBgNumX] =
-	{
-		{ 0, 1, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	};
 }
 
 Map::Map() :
@@ -45,7 +26,9 @@ Map::Map() :
 	m_graphWidth(0),
 	m_graphHeight(0),
 	m_cursorNo(0),
-	m_mapData(kBgNumX * kBgNumY, 0)
+	m_mapData(kBgNumX * kBgNumY, 0),
+	m_scrollX(0),
+	m_scrollY(0)
 {
 
 }
@@ -95,7 +78,7 @@ void Map::update()
 		//readData();
 	}
 
-
+#if false
 
 	if (Pad::isTrigger(PAD_INPUT_UP))
 	{
@@ -125,36 +108,47 @@ void Map::update()
 			m_cursorNo++;
 		}
 	}
+#else
+
+	if (Pad::isPress(PAD_INPUT_UP))
+	{
+		m_scrollY++;
+	}
+	if (Pad::isTrigger(PAD_INPUT_DOWN))
+	{
+		m_scrollY--;
+	}
+	if (Pad::isTrigger(PAD_INPUT_LEFT))
+	{
+		m_scrollX--;
+	}
+	if (Pad::isTrigger(PAD_INPUT_RIGHT))
+	{
+		m_scrollX++;
+	}
+#endif
 }
 
 
 void Map::draw()
 {
-#if false
-	for (int x = 0; x < kBgNumX; x++)
-	{
-		for (int y = 0; y < kBgNumY; y++)
-		{
-			const int chipNo = kMapData[y][x];
-			assert(chipNo >= 0);
-			assert(chipNo < chipNum());
+	//m_scrollX > 0		右ずれている
+	//m_scrollX < 0		左ずれている
+	//m_scrollY > 0		下ずれている
+	//m_scrollY < 0		上ずれている
 
-			int graphX = chipNo % chipNumX() * kChipSize;
-			int graphY = chipNo / chipNumX() * kChipSize;
-
-			DrawRectGraph(x * kChipSize, y * kChipSize,
-				graphX, graphY, kChipSize, kChipSize,
-				m_handle, true, false);
-		}
-	}
-#else
-	//m_mapData
+	int indexX = 0;
+	int indexY = 0;
+	
+	indexX = -(m_scrollX / kChipSize);
+	while (indexX < 0)	indexX += kBgNumX;
+	indexY = -(m_scrollY / kChipSize);
+	while (indexY < 0)	indexY += kBgNumX;
 
 	for (int x = 0; x < kBgNumX; x++)
 	{
 		for (int y = 0; y < kBgNumY; y++)
 		{
-			//const int chipNo = kMapData[y][x];
 			const int chipNo = m_mapData[ y * kBgNumX + x ];
 			assert(chipNo >= 0);
 			assert(chipNo < chipNum());
@@ -167,8 +161,6 @@ void Map::draw()
 				m_handle, true, false);
 		}
 	}
-
-#endif
 	drawCursor();
 }
 
